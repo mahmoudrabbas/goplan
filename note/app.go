@@ -7,24 +7,52 @@ import (
 	"strings"
 
 	"example.com/note/note"
+	"example.com/note/todo"
 )
+
+type saver interface {
+	Save() error
+}
+
+type displayer interface {
+	Display()
+}
+
+type outputable interface {
+	saver
+	Display()
+}
+
+func outputData(data outputable) error {
+	data.Display()
+	return saveData(data)
+}
+
+func saveData(data saver) error {
+	return data.Save()
+}
 
 func main() {
 
 	title, content := getNoteDetails()
 
+	text := getTodoText()
+
 	note, err := note.NewNote(title, content)
+
+	todo, err := todo.NewTodo(text)
 
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	note.Display()
-	err = note.Save()
-	if err != nil {
-		fmt.Println(err, "Sorry, Failed To Save Note.")
-	}
+	outputData(note)
+
+	outputData(todo)
+
+	// note.Display()
+	// todo.Display()
 
 }
 
@@ -34,9 +62,13 @@ func getNoteDetails() (string, string) {
 	return title, content
 }
 
+func getTodoText() string {
+	text := getInput("Todo Text:")
+	return text
+}
+
 func getInput(prompt string) string {
 	fmt.Print(prompt)
-	// var value string
 
 	reader := bufio.NewReader(os.Stdin)
 	text, err := reader.ReadString('\n')
@@ -46,6 +78,5 @@ func getInput(prompt string) string {
 	}
 	text = strings.TrimSuffix(text, "\n")
 	text = strings.TrimSuffix(text, "\r")
-	// fmt.Scan(&value)
 	return text
 }
