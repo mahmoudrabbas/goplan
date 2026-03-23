@@ -14,9 +14,9 @@ type saver interface {
 	Save() error
 }
 
-type displayer interface {
-	Display()
-}
+// type displayer interface {
+// 	Display()
+// }
 
 type outputable interface {
 	saver
@@ -32,7 +32,13 @@ func saveData(data saver) error {
 	return data.Save()
 }
 
+func printAnything(v interface{}) {
+	fmt.Println(v)
+}
+
 func main() {
+
+	// printAnything(1)
 
 	title, content := getNoteDetails()
 
