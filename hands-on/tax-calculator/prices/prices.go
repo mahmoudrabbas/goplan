@@ -1,6 +1,7 @@
 package prices
 
 import (
+	"errors"
 	"fmt"
 
 	"example.com/tax-calc/conversion"
@@ -23,9 +24,13 @@ func NewTaxInclucdedPrices(io iomanager.IOManager, taxRates float64) *TaxInclude
 	}
 }
 
-func (job *TaxIncludedPricesJob) Process() {
+func (job *TaxIncludedPricesJob) Process() error {
 
-	job.LoadData("prices.txt")
+	err := job.LoadData("prices.txt")
+	if err != nil {
+		return errors.New(err.Error())
+	}
+
 	result := make(map[string]string)
 	for _, price := range job.InputPrices {
 		result[fmt.Sprintf("%.2f", price)] = fmt.Sprintf("%.2f", price*(1+job.TaxRate))
@@ -33,22 +38,26 @@ func (job *TaxIncludedPricesJob) Process() {
 
 	job.TaxInlcudedPrices = result
 
-	job.IOManager.WriteResults(job)
+	err = job.IOManager.WriteResults(job)
+	if err != nil {
+		return errors.New(err.Error())
+	}
+	return nil
 }
 
-func (job *TaxIncludedPricesJob) LoadData(fileName string) {
+func (job *TaxIncludedPricesJob) LoadData(fileName string) error {
 	lines, err := job.IOManager.ReadLines()
 
 	if err != nil {
-		fmt.Println(err)
-		return
+		// fmt.Println(err)
+		return errors.New("Error Reading from the file")
 	}
 	prices, err := conversion.StringsToFloats(lines)
 	if err != nil {
-		fmt.Println(err)
-		return
+		// fmt.Println(err)
+		return errors.New("Error Converting to float")
 	}
 
 	job.InputPrices = prices
-
+	return nil
 }
