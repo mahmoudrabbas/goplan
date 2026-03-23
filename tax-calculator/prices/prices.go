@@ -24,12 +24,12 @@ func NewTaxInclucdedPrices(io iomanager.IOManager, taxRates float64) *TaxInclude
 	}
 }
 
-func (job *TaxIncludedPricesJob) Process() error {
+func (job *TaxIncludedPricesJob) Process(doneChannel chan bool) {
 
-	err := job.LoadData("prices.txt")
-	if err != nil {
-		return errors.New(err.Error())
-	}
+	job.LoadData("prices.txt")
+	//if err != nil {
+	//  return errors.New(err.Error())
+	//}
 
 	result := make(map[string]string)
 	for _, price := range job.InputPrices {
@@ -38,11 +38,13 @@ func (job *TaxIncludedPricesJob) Process() error {
 
 	job.TaxInlcudedPrices = result
 
-	err = job.IOManager.WriteResults(job)
-	if err != nil {
-		return errors.New(err.Error())
-	}
-	return nil
+	job.IOManager.WriteResults(job)
+
+	doneChannel <- true
+	// if err != nil {
+	// 	return errors.New(err.Error())
+	// }
+	// return nil
 }
 
 func (job *TaxIncludedPricesJob) LoadData(fileName string) error {

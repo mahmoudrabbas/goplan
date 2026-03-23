@@ -19,8 +19,11 @@ func main() {
 	outDir := "results/"
 	file := "prices.txt"
 	os.MkdirAll("results", 0755)
-	for _, tax := range taxRates {
 
+	channels := make([]chan bool, len(taxRates))
+
+	for i, tax := range taxRates {
+		channels[i] = make(chan bool)
 		fileName := filepath.Join(outDir, fmt.Sprintf("result_%.0f.json", 1000*tax))
 
 		fm := filemanager.New(file, fileName)
@@ -28,11 +31,16 @@ func main() {
 		// cmd := cmdmanager.New()
 		taxedPrice := prices.NewTaxInclucdedPrices(fm, tax)
 
-		err := taxedPrice.Process()
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		go taxedPrice.Process(channels[i])
+
+		// if err != nil {
+		// 	fmt.Println(err)
+		// 	return
+		// }
+	}
+
+	for _, channel := range channels {
+		<-channel
 	}
 
 	// fmt.Println(result)
