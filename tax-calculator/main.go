@@ -2,6 +2,8 @@ package main
 
 import (
 	// "fmt"
+
+	// "errors"
 	"fmt"
 	"os"
 
@@ -20,10 +22,13 @@ func main() {
 	file := "prices.txt"
 	os.MkdirAll("results", 0755)
 
-	channels := make([]chan bool, len(taxRates))
+	doneChannels := make([]chan bool, len(taxRates))
+	errorChannels := make([]chan error, len(taxRates))
 
 	for i, tax := range taxRates {
-		channels[i] = make(chan bool)
+		doneChannels[i] = make(chan bool)
+		errorChannels[i] = make(chan error)
+
 		fileName := filepath.Join(outDir, fmt.Sprintf("result_%.0f.json", 1000*tax))
 
 		fm := filemanager.New(file, fileName)
@@ -31,7 +36,7 @@ func main() {
 		// cmd := cmdmanager.New()
 		taxedPrice := prices.NewTaxInclucdedPrices(fm, tax)
 
-		go taxedPrice.Process(channels[i])
+		go taxedPrice.Process(doneChannels[i], errorChannels[i])
 
 		// if err != nil {
 		// 	fmt.Println(err)
@@ -39,9 +44,24 @@ func main() {
 		// }
 	}
 
-	for _, channel := range channels {
-		<-channel
+	for i := range taxRates {
+		select {
+		case err := <-errorChannels[i]:
+			if err != nil {
+				fmt.Println(err)
+			}
+		case <-doneChannels[i]:
+			fmt.Println("Done")
+		}
 	}
+
+	// for _, errChannel := range errorChannels {
+	// 	<-errChannel
+	// }
+
+	// for _, channel := range doneChannels {
+	// 	<-channel
+	// }
 
 	// fmt.Println(result)
 
